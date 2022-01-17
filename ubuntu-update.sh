@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # bash script to update Ubuntu Linux. Written on 16.04 LTS Server
-# Written by Ted LeRoy with help from Google and the Linux community
+# Written by Ted LeRoy, adjusted by Kevin Holvoet
 # Follow or contribute on GitHub here:
-# https://github.com/TedLeRoy/ubuntu-update.sh
+# https://github.com/digihash/ubuntu-update.sh
 
 # Defining Colors for text output
 red=$( tput setaf 1 );
@@ -31,10 +31,12 @@ for details."
 USAGE="
 Usage: sudo bash ubuntu-update.sh [-ugdrh]
        No option - Run all options (recommended)
-       -u Don't run apt-get update
-       -g Don't run apt-get upgrade -y
-       -d Don't run apt-get dist-upgrade -y
-       -r Don't run apt-get auto-remove
+       -u Don't run apt update
+       -g Don't run apt upgrade -y
+       -d Don't run apt dist-upgrade -y
+       -c Don't run apt clean
+       -p Don't run dpkg --configure -a
+       -r Don't run apt autoremove -y
        -h Display Usage and exit
 "
 
@@ -47,6 +49,10 @@ while getopts ":ugdrh" OPT; do
     g ) gOff=1
       ;;
     d ) dOff=1
+      ;;
+    c ) cOff=1
+      ;;
+    p ) pOff=1
       ;;
     r ) rOff=1
       ;;
@@ -83,7 +89,7 @@ if [[ ! -n $uOff ]]; then
 #     Updating Data Base    #
 #############################\e[0m
 "
-apt-get update | tee /tmp/update-output.txt
+apt update | tee /tmp/update-output.txt
 fi
 
 if [[ ! -n $gOff ]]; then
@@ -92,7 +98,7 @@ if [[ ! -n $gOff ]]; then
 # Upgrading Operating System #
 ##############################\e[0m
 "
-apt-get upgrade -y | tee -a /tmp/update-output.txt
+apt upgrade -y | tee -a /tmp/update-output.txt
 fi
 
 if [[ ! -n $dOff ]]; then
@@ -101,7 +107,7 @@ if [[ ! -n $dOff ]]; then
 #   Starting Full Upgrade   #
 #############################\e[0m
 "
-apt-get dist-upgrade -y | tee -a /tmp/update-output.txt
+apt dist-upgrade -y | tee -a /tmp/update-output.txt
 echo -e "
 \e[32m#############################
 #   Full Upgrade Complete   #
@@ -109,13 +115,13 @@ echo -e "
 "
 fi
 
-if [[ ! -n $rOff ]]; then
+if [[ ! -n $cOff ]]; then
     echo -e "
 \e[32m#############################
 #    Starting Apt Clean     #
 #############################\e[0m
 "
-apt-get clean | tee -a /tmp/update-output.txt
+apt clean | tee -a /tmp/update-output.txt
 echo -e "
 \e[32m#############################
 #     Apt Clean Complete    #
@@ -123,6 +129,34 @@ echo -e "
 "
 fi
 
+if [[ ! -n $pOff ]]; then
+    echo -e "
+\e[32m#############################
+#    Starting Dpkg Config   #
+#############################\e[0m
+"
+dpkg --configure -a | tee -a /tmp/update-output.txt
+apt install -f -y | tee -a /tmp/update-output.txt
+echo -e "
+\e[32m#############################
+#     Dpkg Config Complete  #
+#############################\e[0m
+"
+fi
+
+if [[ ! -n $rOff ]]; then
+    echo -e "
+\e[32m#############################
+#    Starting Apt Autoremove #
+#############################\e[0m
+"
+apt autoremove -y | tee -a /tmp/update-output.txt
+echo -e "
+\e[32m#############################
+#     Apt Autoremove Complete #
+#############################\e[0m
+"
+fi
 # Check for existence of update-output.txt and exit if not there.
 
 if [ -f "/tmp/update-output.txt"  ]
